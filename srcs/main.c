@@ -48,7 +48,7 @@ int	main(void) {
 	icmp_frame.icmp_id = SWAP_ENDIANNESS_16((uint16_t)getpid());
 	icmp_frame.icmp_seq = 0;
 	ft_memcpy(&icmp_frame.icmp_dun, &timestamp.tv_sec, sizeof(timestamp.tv_sec));
-	ft_memcpy(&icmp_frame.icmp_dun + sizeof(timestamp.tv_sec), "googoogaga", 11);
+	ft_memcpy((void*)&icmp_frame.icmp_dun + sizeof(timestamp.tv_sec), "googoogaga", 11);
 
 	icmp_frame.icmp_cksum = checksum(&icmp_frame, sizeof(icmp_frame));
 	printf("%lu\n", sizeof(timestamp.tv_sec));
