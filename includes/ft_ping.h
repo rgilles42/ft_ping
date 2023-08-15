@@ -6,13 +6,14 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/26 22:16:31 by rgilles           #+#    #+#             */
-/*   Updated: 2023/08/03 16:44:55 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/08/11 15:28:15 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef LIBFT_H
 # define LIBFT_H
 
+# include <stdlib.h> // exit 
 # include <stdio.h>
 # include <sys/socket.h>
 # include <arpa/inet.h>
@@ -38,6 +39,11 @@ void			ft_bzero(void *s, size_t n);
 	| (x & (0xFFull << 16 )) << 24 \
 	| (x & (0xFFull << 8 )) << 40 \
 	| (x & (0xFFull << 0 )) << 56 )
+
+typedef struct __attribute__ ((__packed__))	s_respframe {
+	char		ip_header[20];
+	struct icmp	icmp_resp;
+}											t_respframe;
 
 typedef struct	s_curping {
 	char*	hostname;
