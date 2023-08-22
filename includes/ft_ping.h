@@ -6,13 +6,14 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/26 22:16:31 by rgilles           #+#    #+#             */
-/*   Updated: 2023/08/11 15:28:15 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/08/22 18:08:14 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef LIBFT_H
 # define LIBFT_H
 
+# include <stdbool.h>
 # include <stdlib.h> // exit 
 # include <stdio.h>
 # include <sys/socket.h>
@@ -47,6 +48,8 @@ typedef struct __attribute__ ((__packed__))	s_respframe {
 
 typedef struct	s_curping {
 	char*	hostname;
+	char*	ip;
+	bool	verb_flag;
 }				t_curping;
 
 void	parse_command(int argc, char** argv, t_curping* current_command);

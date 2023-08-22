@@ -19,7 +19,7 @@ INCL	=	includes/
 LIBFT_D	=	Libft/
 
 SRCSD	=	srcs/
-SRCSF	=	main.c
+SRCSF	=	parse_command.c main.c
 SRCS	=	$(addprefix ${SRCSD},${SRCSF})
 OBJS	=	${SRCS:.c=.o}
 
