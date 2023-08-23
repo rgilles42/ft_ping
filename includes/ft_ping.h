@@ -6,7 +6,7 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/26 22:16:31 by rgilles           #+#    #+#             */
-/*   Updated: 2023/08/22 18:08:14 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/08/23 19:19:56 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,11 @@ void			ft_bzero(void *s, size_t n);
 	| (x & (0xFFull << 16 )) << 24 \
 	| (x & (0xFFull << 8 )) << 40 \
 	| (x & (0xFFull << 0 )) << 56 )
+
+typedef struct __attribute__ ((__packed__))	s_reqframe {
+	struct icmp	icmp_req;
+	char		supplementary_data[36];
+}											t_reqframe;
 
 typedef struct __attribute__ ((__packed__))	s_respframe {
 	char		ip_header[20];

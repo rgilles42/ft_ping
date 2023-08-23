@@ -6,7 +6,7 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/26 22:14:34 by rgilles           #+#    #+#             */
-/*   Updated: 2023/08/22 18:13:23 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/08/23 19:20:01 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ uint16_t	checksum(void *addr, int size) {
 int	main(int argc, char** argv) {
 	t_curping			current_ping;
 	int					sock_fd;
-	struct icmp			icmp_req;
+	t_reqframe			req_frame;
 	struct sockaddr_in	ping_dstaddr;
 	struct timeval		timestamp;
 	t_respframe			resp_frame;
@@ -42,32 +42,35 @@ int	main(int argc, char** argv) {
 		exit(-1);
 	}
 
-	ft_bzero(&icmp_req, sizeof(icmp_req));
-	//eventual dns resolution
-	current_ping.ip = current_ping.hostname;
-	gettimeofday(&timestamp, NULL);
 
-	inet_pton(AF_INET, current_ping.ip, &ping_dstaddr.sin_addr);
 	ping_dstaddr.sin_family = AF_INET;
 	ping_dstaddr.sin_port = 0;
+	if (!inet_pton(AF_INET, current_ping.hostname, &ping_dstaddr.sin_addr)) {
+		printf("%s\n", "TODO: DNS resolution");
+		exit(1);
+	} else {
+		current_ping.ip = current_ping.hostname;
+	}
+	gettimeofday(&timestamp, NULL);
 
-	icmp_req.icmp_type = ICMP_ECHO;
-	icmp_req.icmp_code = 0;
-	icmp_req.icmp_id = SWAP_ENDIANNESS_16((uint16_t)getpid());
+	ft_bzero(&req_frame, sizeof(req_frame));
+	req_frame.icmp_req.icmp_type = ICMP_ECHO;
+	req_frame.icmp_req.icmp_code = 0;
+	req_frame.icmp_req.icmp_id = SWAP_ENDIANNESS_16((uint16_t)getpid());
 
-	printf("PING %s (%s): %lu data bytes\n", current_ping.hostname, current_ping.ip, sizeof(icmp_req.icmp_dun));
+	printf("PING %s (%s): %lu data bytes\n", current_ping.hostname, current_ping.ip, sizeof(req_frame.icmp_req.icmp_dun) + sizeof(req_frame.supplementary_data));
 
-	icmp_req.icmp_seq = 0;
-	ft_memcpy(&icmp_req.icmp_dun, &timestamp.tv_sec, sizeof(timestamp.tv_sec));
-	ft_memcpy((char*)&icmp_req.icmp_dun + sizeof(timestamp.tv_sec), "googoogaga", 11);
-	icmp_req.icmp_cksum = checksum(&icmp_req, sizeof(icmp_req));
+	req_frame.icmp_req.icmp_seq = 0;
+	ft_memcpy(&req_frame.icmp_req.icmp_dun, &timestamp.tv_sec, sizeof(timestamp.tv_sec));
+	ft_memcpy((char*)&req_frame.icmp_req.icmp_dun + sizeof(timestamp.tv_sec), "googoogaga", 11);
+	req_frame.icmp_req.icmp_cksum = checksum(&req_frame.icmp_req, sizeof(req_frame.icmp_req));
 
-	if (sendto(sock_fd, &icmp_req, sizeof(icmp_req), 0, (struct sockaddr*)&ping_dstaddr, sizeof(ping_dstaddr)) < 0) {
+	if (sendto(sock_fd, &req_frame, sizeof(req_frame), 0, (struct sockaddr*)&ping_dstaddr, sizeof(ping_dstaddr)) < 0) {
 		perror("sendto");
 		exit(-1);
 	}
 
-	if (recvfrom(sock_fd, &resp_frame, sizeof(resp_frame), 0, NULL, (socklen_t*)sizeof(ping_dstaddr)) < 0) {
+	if (recvfrom(sock_fd, &resp_frame, sizeof(resp_frame), 0, NULL, NULL) < 0) {
 		perror("recvfrom");
 		exit(-1);
 	}
