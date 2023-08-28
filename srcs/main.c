@@ -6,68 +6,42 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/26 22:14:34 by rgilles           #+#    #+#             */
-/*   Updated: 2023/08/28 17:29:14 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/08/28 18:50:57 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <signal.h>
 #include <ft_ping.h>
 
-uint16_t	checksum(void *addr, int size) {
-	uint16_t	*buff;
-	uint32_t	sum;
+t_curping			current_ping;
 
-	buff = (uint16_t *)addr;
-	for (sum = 0; size > 1; size -= 2)
-		sum += *buff++;
-	if (size == 1)
-		sum += *(uint8_t*)buff;
-	sum = (sum >> 16) + (sum & 0xFFFF);
-	sum += (sum >> 16);
-	return (~sum);
-}
+void	sig_handler(int signo) {
+	t_list*	tmp = current_ping.timestamps_list;
+	int		tr_packets = 0;
+	int		rcvd_packets = 0;
 
-void	add_timestamp(t_list** timestamp_list, uint16_t icmpseq, struct timeval* timestamp){
-	struct timeval*	ts;
-	t_list*			node;
-
-	ts = malloc(sizeof(struct timeval));
-	if (!ts) {
-		perror("malloc");
-		exit(-1);
+	(void)signo;
+	printf("--- %s ping statistics ---\n", current_ping.hostname);
+	while (tmp) {
+		++tr_packets;
+		if (tmp->rank == PING_RECEIVED)
+			++rcvd_packets;
+		tmp = tmp->next;
 	}
-	node = ft_lstnew(ts);
-	node->rank = icmpseq;
-	ft_memcpy(node->content, timestamp, sizeof(struct timeval));
-	ft_lstadd_back(timestamp_list, node);
-}
-
-struct timeval*	get_timestamp(t_list* timestamp_list, uint16_t icmpseq){
-	while (timestamp_list->rank != icmpseq){
-		timestamp_list = timestamp_list->next;
-	}
-	return timestamp_list->content;
+	ft_lstclear(&current_ping.timestamps_list, free);
+	printf("%d packets transmitted, %d packets received, %d%% packet loss\n", tr_packets, rcvd_packets, (tr_packets - rcvd_packets) * 100 / tr_packets);
+	exit(0);
 }
 
 int	main(int argc, char** argv) {
-	t_curping			current_ping;
-	int					sock_fd;
-	t_reqframe			req_frame;
 	struct sockaddr_in	ping_dstaddr;
-	t_list				*timestamp_list;
-	unsigned long		prev_req_timestamp;
-	struct timeval		curr_timestamp;
-	struct timeval		timestamp_resp;
+	t_reqframe			req_frame;
 	t_respframe			resp_frame;
+	struct timeval		curr_timestamp;
+	unsigned long		prev_req_timestamp;
 
-	timestamp_list = NULL;
 	ft_bzero(&current_ping, sizeof(current_ping));
 	parse_command(argc, argv, &current_ping);
-
-	if ((sock_fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1) {
-		perror("socket");
-		exit(-1);
-	}
-
 
 	ping_dstaddr.sin_family = AF_INET;
 	ping_dstaddr.sin_port = 0;
@@ -76,6 +50,11 @@ int	main(int argc, char** argv) {
 		exit(1);
 	} else {
 		current_ping.ip = current_ping.hostname;
+	}
+
+	if ((current_ping.sock_fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1) {
+		perror("socket");
+		exit(-1);
 	}
 
 	ft_bzero(&req_frame, sizeof(req_frame));
@@ -87,31 +66,19 @@ int	main(int argc, char** argv) {
 	prev_req_timestamp = 0;
 	printf("PING %s (%s): %lu data bytes\n", current_ping.hostname, current_ping.ip, sizeof(req_frame.icmp_req.icmp_dun) + sizeof(req_frame.supplementary_data));
 
+	signal(SIGINT, sig_handler);
+
 	while (1) {
 		gettimeofday(&curr_timestamp, NULL);
 		if (curr_timestamp.tv_sec - prev_req_timestamp) {
-			ft_memcpy(&req_frame.icmp_req.icmp_dun, &curr_timestamp.tv_sec, sizeof(curr_timestamp.tv_sec));
-			ft_memcpy((char*)&req_frame.icmp_req.icmp_dun + sizeof(curr_timestamp.tv_sec), "googoogaga", 11);
-			req_frame.icmp_req.icmp_cksum = 0;
-			req_frame.icmp_req.icmp_cksum = checksum(&req_frame, sizeof(req_frame));
-
-			if (sendto(sock_fd, &req_frame, sizeof(req_frame), 0, (struct sockaddr*)&ping_dstaddr, sizeof(ping_dstaddr)) < 0) {
-				perror("sendto");
-				exit(-1);
-			}
-			add_timestamp(&timestamp_list, req_frame.icmp_req.icmp_seq, &curr_timestamp);
-			req_frame.icmp_req.icmp_seq += SWAP_ENDIANNESS_16((uint16_t)1);
+			generate_request(&current_ping, &req_frame, &ping_dstaddr);
 			prev_req_timestamp = curr_timestamp.tv_sec;
 		}
 
-		if (recvfrom(sock_fd, &resp_frame, sizeof(resp_frame), MSG_DONTWAIT, NULL, NULL) > 0
+		if (recvfrom(current_ping.sock_fd, &resp_frame, sizeof(resp_frame), MSG_DONTWAIT, NULL, NULL) > 0
 		&& *(uint32_t*)&resp_frame.ip_header[12] == ping_dstaddr.sin_addr.s_addr
 		&& resp_frame.icmp_resp.icmp_type == ICMP_ECHOREPLY) {
-			gettimeofday(&timestamp_resp, NULL);
-			uint16_t icmp_resp_size = (*(uint16_t*)&resp_frame.ip_header[2] << 8 | *(uint16_t*)&resp_frame.ip_header[2] >> 8) - 20 ;
-			uint16_t icmp_resp_seq = SWAP_ENDIANNESS_16(resp_frame.icmp_resp.icmp_seq);
-			struct timeval* req_ts = get_timestamp(timestamp_list, resp_frame.icmp_resp.icmp_seq);
-			printf("%u bytes from %s: icmp_seq=%u ttl=%u time=%.3f ms\n", icmp_resp_size, current_ping.ip, icmp_resp_seq, resp_frame.ip_header[8], (timestamp_resp.tv_sec - req_ts->tv_sec) * 1000.0 + (timestamp_resp.tv_usec - req_ts->tv_usec) / 1000.0);
+			handle_response(&current_ping, resp_frame);
 		}
 	}
 }

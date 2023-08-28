@@ -6,7 +6,7 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/26 22:16:31 by rgilles           #+#    #+#             */
-/*   Updated: 2023/08/28 15:39:28 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/08/28 18:50:56 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,18 +25,16 @@
 # include <sys/time.h>
 # include <libft.h>
 
-# define PING_PKT_SIZE		84
-# define PING_PKT_DATA_SIZE	(PING_PKT_SIZE - sizeof(struct icmp) - sizeof(time_t))
+# define PING_RECEIVED -42
 # define SWAP_ENDIANNESS_16(x) (x << 8 | x >> 8);
-# define SWAP_ENDIANNESS_64(x) \
-	( x >> 56 \
-	| (x & (0xFFull << 48 )) >> 40 \
-	| (x & (0xFFull << 40 )) >> 24 \
-	| (x & (0xFFull << 32 )) >> 8 \
-	| (x & (0xFFull << 24 )) << 8 \
-	| (x & (0xFFull << 16 )) << 24 \
-	| (x & (0xFFull << 8 )) << 40 \
-	| (x & (0xFFull << 0 )) << 56 )
+
+typedef struct	s_curping {
+	char*	hostname;
+	char*	ip;
+	bool	verb_flag;
+	int		sock_fd;
+	t_list*	timestamps_list;
+}				t_curping;
 
 typedef struct __attribute__ ((__packed__))	s_reqframe {
 	struct icmp	icmp_req;
@@ -48,12 +46,8 @@ typedef struct __attribute__ ((__packed__))	s_respframe {
 	struct icmp	icmp_resp;
 }											t_respframe;
 
-typedef struct	s_curping {
-	char*	hostname;
-	char*	ip;
-	bool	verb_flag;
-}				t_curping;
-
 void	parse_command(int argc, char** argv, t_curping* current_command);
+void	generate_request(t_curping* current_ping, t_reqframe* req_frame, struct sockaddr_in* ping_dstaddr);
+void	handle_response(t_curping* current_ping, t_respframe resp_frame);
 
 #endif

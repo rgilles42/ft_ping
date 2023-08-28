@@ -12,14 +12,14 @@
 
 NAME	=	ft_ping
 
-CC		=	clang
+CC		=	gcc
 CFLAGS	=	-Wall -Wextra -Werror -g -I${LIBFT_D}${INCL} -I${INCL}
 
 INCL	=	includes/
 LIBFT_D	=	Libft/
 
 SRCSD	=	srcs/
-SRCSF	=	parse_command.c main.c
+SRCSF	=	parse_command.c io.c main.c
 SRCS	=	$(addprefix ${SRCSD},${SRCSF})
 OBJS	=	${SRCS:.c=.o}
 
