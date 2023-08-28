@@ -6,12 +6,12 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/26 22:16:31 by rgilles           #+#    #+#             */
-/*   Updated: 2023/08/23 19:19:56 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/08/28 15:39:28 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef LIBFT_H
-# define LIBFT_H
+#ifndef FT_PING_H
+# define FT_PING_H
 
 # include <stdbool.h>
 # include <stdlib.h> // exit 
@@ -24,9 +24,6 @@
 # include <sys/types.h>
 # include <sys/time.h>
 # include <libft.h>
-
-void			*ft_memcpy(void *s, const void *src, size_t n);
-void			ft_bzero(void *s, size_t n);
 
 # define PING_PKT_SIZE		84
 # define PING_PKT_DATA_SIZE	(PING_PKT_SIZE - sizeof(struct icmp) - sizeof(time_t))
