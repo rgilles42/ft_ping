@@ -6,12 +6,14 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/26 22:14:34 by rgilles           #+#    #+#             */
-/*   Updated: 2023/08/30 16:46:20 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/08/30 18:49:56 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <signal.h>
 #include <ft_ping.h>
+
+#include <netdb.h> //getaddrinfo
 
 t_curping			current_ping;
 
@@ -33,6 +35,30 @@ void	sig_handler(int signo) {
 	exit(0);
 }
 
+int	resolve_hostname() {
+	struct addrinfo		hints;
+	struct addrinfo*	getaddrinfo_results;
+	int					gai_res;
+
+	ft_memset(&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = AF_INET;    /* Allow IPv4 or IPv6 */
+	hints.ai_socktype = SOCK_RAW; /* Datagram socket */
+	hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
+	hints.ai_protocol = IPPROTO_ICMP;          /* Any protocol */
+	hints.ai_canonname = NULL;
+	hints.ai_addr = NULL;
+	hints.ai_next = NULL;
+	if ((gai_res = getaddrinfo(current_ping.hostname, NULL, &hints, &getaddrinfo_results))) {
+		printf("error: %s\n", gai_strerror(gai_res));
+		return -1;
+	}
+	current_ping.addr.sin_family = AF_INET;
+	current_ping.addr.sin_port = 0;
+	current_ping.addr.sin_addr.s_addr = ((struct sockaddr_in*)getaddrinfo_results->ai_addr)->sin_addr.s_addr;
+	freeaddrinfo(getaddrinfo_results);
+	return 0;
+}
+
 int	main(int argc, char** argv) {
 	t_reqframe			req_frame;
 	t_respframe			resp_frame;
@@ -40,12 +66,9 @@ int	main(int argc, char** argv) {
 	unsigned long		prev_req_timestamp;
 
 	parse_command(argc, argv, &current_ping);
-
-	current_ping.addr.sin_family = AF_INET;
-	current_ping.addr.sin_port = 0;
-	if (!inet_pton(AF_INET, current_ping.hostname, &current_ping.addr.sin_addr)) {
-		printf("%s\n", "TODO: DNS resolution");
-		exit(1);
+	
+	if (resolve_hostname()) {
+		exit(-1);
 	}
 
 	if (!inet_ntop(current_ping.addr.sin_family, &current_ping.addr.sin_addr, current_ping.ip, INET_ADDRSTRLEN)) {

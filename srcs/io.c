@@ -13,9 +13,8 @@
 #include <ft_ping.h>
 
 struct timeval*	get_timestamp(t_list* timestamps_list, uint16_t icmpseq){
-	while (timestamps_list->rank != icmpseq){
+	while (timestamps_list->rank != icmpseq)
 		timestamps_list = timestamps_list->next;
-	}
 	timestamps_list->rank = PING_RECEIVED;
 	return timestamps_list->content;
 }
@@ -32,6 +31,8 @@ void	handle_response(t_curping* current_ping, t_respframe resp_frame) {
 		gettimeofday(&timestamp_resp, NULL);
 		icmp_resp_seq = SWAP_ENDIANNESS_16(resp_frame.icmp_resp.icmp_seq);
 		printf("%u bytes from %s: icmp_seq=%u ttl=%u time=%.3f ms\n", icmp_resp_size, current_ping->ip, icmp_resp_seq, resp_frame.ip_header[8], (timestamp_resp.tv_sec - req_ts->tv_sec) * 1000.0 + (timestamp_resp.tv_usec - req_ts->tv_usec) / 1000.0);
+	} else {
+		printf("Oopsie\n");
 	}
 }
 
