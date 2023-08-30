@@ -6,7 +6,7 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/27 16:24:21 by rgilles           #+#    #+#             */
-/*   Updated: 2023/08/22 18:13:30 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/08/29 14:32:44 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,8 +33,8 @@ void	parse_command(int argc, char** argv, t_curping* current_command) {
 					exit(64);
 			}
 		}
-		else if (current_command->hostname == NULL) {
-			current_command->hostname = argv[i];
+		else if (current_command->hostname[0] == '\0') {
+			ft_strlcpy(current_command->hostname, argv[i], 254);
 		}
 	}
 	if (!current_command->hostname) {

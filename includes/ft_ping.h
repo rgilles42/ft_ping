@@ -6,7 +6,7 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/26 22:16:31 by rgilles           #+#    #+#             */
-/*   Updated: 2023/08/28 18:50:56 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/08/30 16:46:18 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,11 +29,12 @@
 # define SWAP_ENDIANNESS_16(x) (x << 8 | x >> 8);
 
 typedef struct	s_curping {
-	char*	hostname;
-	char*	ip;
-	bool	verb_flag;
-	int		sock_fd;
-	t_list*	timestamps_list;
+	char				hostname[254];
+	char				ip[INET_ADDRSTRLEN];
+	struct sockaddr_in	addr;
+	bool				verb_flag;
+	int					sock_fd;
+	t_list*				timestamps_list;
 }				t_curping;
 
 typedef struct __attribute__ ((__packed__))	s_reqframe {

@@ -6,7 +6,7 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/26 22:14:34 by rgilles           #+#    #+#             */
-/*   Updated: 2023/08/28 18:50:57 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/08/30 16:46:20 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,23 +34,25 @@ void	sig_handler(int signo) {
 }
 
 int	main(int argc, char** argv) {
-	struct sockaddr_in	ping_dstaddr;
 	t_reqframe			req_frame;
 	t_respframe			resp_frame;
 	struct timeval		curr_timestamp;
 	unsigned long		prev_req_timestamp;
 
-	ft_bzero(&current_ping, sizeof(current_ping));
 	parse_command(argc, argv, &current_ping);
 
-	ping_dstaddr.sin_family = AF_INET;
-	ping_dstaddr.sin_port = 0;
-	if (!inet_pton(AF_INET, current_ping.hostname, &ping_dstaddr.sin_addr)) {
+	current_ping.addr.sin_family = AF_INET;
+	current_ping.addr.sin_port = 0;
+	if (!inet_pton(AF_INET, current_ping.hostname, &current_ping.addr.sin_addr)) {
 		printf("%s\n", "TODO: DNS resolution");
 		exit(1);
-	} else {
-		current_ping.ip = current_ping.hostname;
 	}
+
+	if (!inet_ntop(current_ping.addr.sin_family, &current_ping.addr.sin_addr, current_ping.ip, INET_ADDRSTRLEN)) {
+		perror("ntop");
+		exit(-1);
+	}
+
 
 	if ((current_ping.sock_fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1) {
 		perror("socket");
@@ -71,12 +73,12 @@ int	main(int argc, char** argv) {
 	while (1) {
 		gettimeofday(&curr_timestamp, NULL);
 		if (curr_timestamp.tv_sec - prev_req_timestamp) {
-			generate_request(&current_ping, &req_frame, &ping_dstaddr);
+			generate_request(&current_ping, &req_frame, &current_ping.addr);
 			prev_req_timestamp = curr_timestamp.tv_sec;
 		}
 
 		if (recvfrom(current_ping.sock_fd, &resp_frame, sizeof(resp_frame), MSG_DONTWAIT, NULL, NULL) > 0
-		&& *(uint32_t*)&resp_frame.ip_header[12] == ping_dstaddr.sin_addr.s_addr
+		&& *(uint32_t*)&resp_frame.ip_header[12] == current_ping.addr.sin_addr.s_addr
 		&& resp_frame.icmp_resp.icmp_type == ICMP_ECHOREPLY) {
 			handle_response(&current_ping, resp_frame);
 		}
