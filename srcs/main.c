@@ -78,8 +78,7 @@ int	main(int argc, char** argv) {
 		}
 
 		if (recvfrom(current_ping.sock_fd, &resp_frame, sizeof(resp_frame), MSG_DONTWAIT, NULL, NULL) > 0
-		&& *(uint32_t*)&resp_frame.ip_header[12] == current_ping.addr.sin_addr.s_addr
-		&& resp_frame.icmp_resp.icmp_type == ICMP_ECHOREPLY) {
+		&& *(uint32_t*)&resp_frame.ip_header[12] == current_ping.addr.sin_addr.s_addr) {
 			handle_response(&current_ping, resp_frame);
 		}
 	}
