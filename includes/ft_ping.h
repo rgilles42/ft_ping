@@ -30,9 +30,10 @@
 
 typedef struct	s_curping {
 	char				hostname[254];
-	char				ip[INET_ADDRSTRLEN];
-	struct sockaddr_in	addr;
 	bool				verb_flag;
+	uint16_t			ttl;
+	struct sockaddr_in	addr;
+	char				ip[INET_ADDRSTRLEN];
 	int					sock_fd;
 	t_list*				timestamps_list;
 }				t_curping;

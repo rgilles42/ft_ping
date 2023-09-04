@@ -71,6 +71,7 @@ int	resolve_hostname() {
 }
 
 int	main(int argc, char** argv) {
+	struct timeval		timeout_sockopt;
 	t_reqframe			req_frame;
 	t_respframe			resp_frame;
 	struct timeval		curr_timestamp;
@@ -92,6 +93,15 @@ int	main(int argc, char** argv) {
 		print_error("ft_ping: icmp open socket");
 		exit(-1);
 	}
+
+	timeout_sockopt.tv_sec = 5;
+	timeout_sockopt.tv_usec = 0;
+
+	if (setsockopt(current_ping.sock_fd, SOL_IP, IP_TTL, &current_ping.ttl, sizeof(current_ping.ttl)) ||
+		setsockopt(current_ping.sock_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout_sockopt, sizeof(timeout_sockopt))
+		)
+		exit(1);
+
 
 	ft_bzero(&req_frame, sizeof(req_frame));
 	req_frame.icmp_req.icmp_type = ICMP_ECHO;

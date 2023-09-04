@@ -6,7 +6,7 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/27 16:24:21 by rgilles           #+#    #+#             */
-/*   Updated: 2023/08/29 14:32:44 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/09/04 18:40:07 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,8 +28,17 @@ void	parse_command(int argc, char** argv, t_curping* current_command) {
 				case '?':
 					print_help();
 					exit(0);
+				case '-':
+					if (argv[i][2] == 't' && argv[i][3] == 't' && argv[i][4] == 'l')
+						if (argc > i + 1 && argv[++i]) {
+							current_command->ttl = ft_atoi(argv[i]);
+							if (current_command->ttl > 0)
+								break;
+							--i;
+						}
+					// fall-through
 				default:
-					printf("ft_ping: invalid option -- '%c'\n", argv[i][1]);
+					fprintf(stderr, "ft_ping: invalid option -- '%c'\n", argv[i][1]);
 					exit(64);
 			}
 		}
@@ -37,8 +46,10 @@ void	parse_command(int argc, char** argv, t_curping* current_command) {
 			ft_strlcpy(current_command->hostname, argv[i], 254);
 		}
 	}
-	if (!current_command->hostname) {
-		printf("%s\n", "ft_ping: missing host operand");
+	if (!current_command->hostname[0]) {
+		fprintf(stderr, "%s\n", "ft_ping: missing host operand");
 		exit(64);
 	}
+	if (!current_command->ttl)
+		current_command->ttl = 64;
 }
