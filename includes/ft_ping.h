@@ -44,8 +44,8 @@ typedef struct __attribute__ ((__packed__))	s_reqframe {
 }											t_reqframe;
 
 typedef struct __attribute__ ((__packed__))	s_respframe {
-	char		ip_header[20];
-	struct icmp	icmp_resp;
+	struct iphdr	ip_header;
+	struct icmp		icmp_resp;
 }											t_respframe;
 
 void	print_error(const char *s);

@@ -31,11 +31,11 @@ void	handle_pong(t_curping* current_ping, t_respframe resp_frame, struct sockadd
 		print_error("ft_ping: ip address field conversion");
 		exit(-1);
 	}
-	icmp_resp_size = SWAP_ENDIANNESS_16(*(uint16_t*)&resp_frame.ip_header[2]) - 20 ;
+	icmp_resp_size = SWAP_ENDIANNESS_16(resp_frame.ip_header.tot_len) - 20 ;
 	icmp_resp_seq = SWAP_ENDIANNESS_16(resp_frame.icmp_resp.icmp_seq);
 	gettimeofday(&timestamp_resp, NULL);
 	req_ts = get_timestamp(current_ping->timestamps_list, resp_frame.icmp_resp.icmp_seq);
-	printf("%u bytes from %s: icmp_seq=%u ttl=%u time=%.3f ms\n", icmp_resp_size, remote_ip, icmp_resp_seq, resp_frame.ip_header[8], (timestamp_resp.tv_sec - req_ts->tv_sec) * 1000.0 + (timestamp_resp.tv_usec - req_ts->tv_usec) / 1000.0);
+	printf("%u bytes from %s: icmp_seq=%u ttl=%u time=%.3f ms\n", icmp_resp_size, remote_ip, icmp_resp_seq, resp_frame.ip_header.ttl, (timestamp_resp.tv_sec - req_ts->tv_sec) * 1000.0 + (timestamp_resp.tv_usec - req_ts->tv_usec) / 1000.0);
 }
 
 void	add_timestamp(t_list** timestamps_list, uint16_t icmpseq, struct timeval* timestamp){

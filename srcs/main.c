@@ -6,7 +6,7 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/26 22:14:34 by rgilles           #+#    #+#             */
-/*   Updated: 2023/09/04 23:57:21 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/09/05 00:21:53 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,7 +70,16 @@ int		resolve_hostname() {
 	return 0;
 }
 
-int	main(int argc, char** argv) {
+void	print_ip_header(struct iphdr	ip) {
+	printf("Vr HL TOS  Len   ID Flg  off TTL Pro  cks      Src      Dst Data\n");
+	printf (" %1x  %1x  %02x %04x %04x   %1x %04x  %02x  %02x %04x",
+		ip.version, ip.ihl, ip.tos, ip.tot_len, ip.id, ((ip.frag_off) & 0xe000) >> 13, (ip.frag_off) & 0x1fff, ip.ttl, ip.protocol, ip.check);
+	printf (" %s ", inet_ntoa (*((struct in_addr *) &ip.saddr)));
+	printf (" %s ", inet_ntoa (*((struct in_addr *) &ip.daddr)));
+	printf("\n");
+}
+
+int		main(int argc, char** argv) {
 	struct timeval		timeout_sockopt;
 	t_reqframe			req_frame;
 	t_respframe			resp_frame;
@@ -123,7 +132,7 @@ int	main(int argc, char** argv) {
 		if (recvfrom(current_ping.sock_fd, &resp_frame, sizeof(resp_frame), MSG_DONTWAIT, NULL, NULL) > 0) {
 			remote_addr.sin_family = AF_INET;
 			remote_addr.sin_port = 0;
-			remote_addr.sin_addr.s_addr = *(uint32_t*)&resp_frame.ip_header[12];
+			remote_addr.sin_addr.s_addr = resp_frame.ip_header.saddr;
 			switch (resp_frame.icmp_resp.icmp_type) {
 				case ICMP_ECHOREPLY:
 					if (resp_frame.icmp_resp.icmp_id == req_frame.icmp_req.icmp_id)
@@ -135,6 +144,7 @@ int	main(int argc, char** argv) {
 					break;
 				case ICMP_TIMXCEED:
 					printf("ICMP_TIMXCEED\n");
+					print_ip_header(resp_frame.ip_header);
 					break;
 			}
 		}
