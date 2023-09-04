@@ -12,7 +12,7 @@
 
 NAME	=	ft_ping
 
-CC		=	gcc
+CC		=	clang
 CFLAGS	=	-Wall -Wextra -Werror -g -I${LIBFT_D}${INCL} -I${INCL}
 
 INCL	=	includes/

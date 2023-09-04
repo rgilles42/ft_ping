@@ -12,10 +12,21 @@
 
 #include <signal.h>
 #include <ft_ping.h>
-
+#include <string.h> //strerror
 #include <netdb.h> //getaddrinfo
 
 t_curping			current_ping;
+
+void	print_error(const char *s) {
+	const char *colon;
+	const char *errstring;
+	if (s == NULL || *s == '\0')
+		s = colon = "";
+	else
+		colon = ": ";
+	errstring = strerror(errno);
+	fprintf(stderr, "%s%s%s\n", s, colon, errstring);
+}
 
 void	sig_handler(int signo) {
 	t_list*	tmp = current_ping.timestamps_list;
@@ -49,7 +60,7 @@ int	resolve_hostname() {
 	hints.ai_addr = NULL;
 	hints.ai_next = NULL;
 	if ((gai_res = getaddrinfo(current_ping.hostname, NULL, &hints, &getaddrinfo_results))) {
-		printf("error: %s\n", gai_strerror(gai_res));
+		fprintf(stderr, "ft_ping: error resolving host \'%s\': %s\n", current_ping.hostname, gai_strerror(gai_res));
 		return -1;
 	}
 	current_ping.addr.sin_family = AF_INET;
@@ -72,13 +83,13 @@ int	main(int argc, char** argv) {
 	}
 
 	if (!inet_ntop(current_ping.addr.sin_family, &current_ping.addr.sin_addr, current_ping.ip, INET_ADDRSTRLEN)) {
-		perror("ntop");
+		print_error("ft_ping: ip address field conversion");
 		exit(-1);
 	}
 
 
 	if ((current_ping.sock_fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1) {
-		perror("socket");
+		print_error("ft_ping: icmp open socket");
 		exit(-1);
 	}
 

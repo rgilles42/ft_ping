@@ -42,7 +42,7 @@ void	add_timestamp(t_list** timestamps_list, uint16_t icmpseq, struct timeval* t
 
 	ts = malloc(sizeof(struct timeval));
 	if (!ts) {
-		perror("malloc");
+		print_error("ft_ping: malloc");
 		exit(-1);
 	}
 	node = ft_lstnew(ts);
@@ -74,7 +74,7 @@ void	generate_request(t_curping* current_ping, t_reqframe* req_frame, struct soc
 	req_frame->icmp_req.icmp_cksum = 0;
 	req_frame->icmp_req.icmp_cksum = gen_checksum(req_frame, sizeof(*req_frame));
 	if (sendto(current_ping->sock_fd, req_frame, sizeof(*req_frame), 0, (struct sockaddr*)ping_dstaddr, sizeof(*ping_dstaddr)) < 0) {
-		perror("sendto");
+		print_error("ft_ping: request failed to be sent through socket");
 		exit(-1);
 	}
 	add_timestamp(&current_ping->timestamps_list, req_frame->icmp_req.icmp_seq, &curr_timestamp);

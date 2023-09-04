@@ -47,6 +47,7 @@ typedef struct __attribute__ ((__packed__))	s_respframe {
 	struct icmp	icmp_resp;
 }											t_respframe;
 
+void	print_error(const char *s);
 void	parse_command(int argc, char** argv, t_curping* current_command);
 void	generate_request(t_curping* current_ping, t_reqframe* req_frame, struct sockaddr_in* ping_dstaddr);
 void	handle_response(t_curping* current_ping, t_respframe resp_frame);
