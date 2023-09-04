@@ -6,14 +6,14 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/26 22:14:34 by rgilles           #+#    #+#             */
-/*   Updated: 2023/08/30 18:49:56 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/09/04 23:57:21 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <signal.h>
 #include <ft_ping.h>
 #include <string.h> //strerror
-#include <netdb.h> //getaddrinfo
+#include <netdb.h>	//getaddrinfo
 
 t_curping			current_ping;
 
@@ -46,7 +46,7 @@ void	sig_handler(int signo) {
 	exit(0);
 }
 
-int	resolve_hostname() {
+int		resolve_hostname() {
 	struct addrinfo		hints;
 	struct addrinfo*	getaddrinfo_results;
 	int					gai_res;
@@ -76,13 +76,13 @@ int	main(int argc, char** argv) {
 	t_respframe			resp_frame;
 	struct timeval		curr_timestamp;
 	unsigned long		prev_req_timestamp;
+	struct sockaddr_in	remote_addr;
 
 	parse_command(argc, argv, &current_ping);
-	
+
 	if (resolve_hostname()) {
 		exit(-1);
 	}
-
 	if (!inet_ntop(current_ping.addr.sin_family, &current_ping.addr.sin_addr, current_ping.ip, INET_ADDRSTRLEN)) {
 		print_error("ft_ping: ip address field conversion");
 		exit(-1);
@@ -117,13 +117,26 @@ int	main(int argc, char** argv) {
 	while (1) {
 		gettimeofday(&curr_timestamp, NULL);
 		if (curr_timestamp.tv_sec - prev_req_timestamp) {
-			generate_request(&current_ping, &req_frame, &current_ping.addr);
+			generate_request(&current_ping, &req_frame);
 			prev_req_timestamp = curr_timestamp.tv_sec;
 		}
-
-		if (recvfrom(current_ping.sock_fd, &resp_frame, sizeof(resp_frame), MSG_DONTWAIT, NULL, NULL) > 0
-		&& *(uint32_t*)&resp_frame.ip_header[12] == current_ping.addr.sin_addr.s_addr) {
-			handle_response(&current_ping, resp_frame);
+		if (recvfrom(current_ping.sock_fd, &resp_frame, sizeof(resp_frame), MSG_DONTWAIT, NULL, NULL) > 0) {
+			remote_addr.sin_family = AF_INET;
+			remote_addr.sin_port = 0;
+			remote_addr.sin_addr.s_addr = *(uint32_t*)&resp_frame.ip_header[12];
+			switch (resp_frame.icmp_resp.icmp_type) {
+				case ICMP_ECHOREPLY:
+					if (resp_frame.icmp_resp.icmp_id == req_frame.icmp_req.icmp_id)
+						handle_pong(&current_ping, resp_frame, remote_addr);
+					break;
+				case ICMP_UNREACH:
+					// code 1: Dest Host Unr or code 3: Dest Net Unr
+					printf("ICMP_UNREACH %u\n", resp_frame.icmp_resp.icmp_code);
+					break;
+				case ICMP_TIMXCEED:
+					printf("ICMP_TIMXCEED\n");
+					break;
+			}
 		}
 	}
 }
