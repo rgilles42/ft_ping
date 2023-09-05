@@ -6,7 +6,7 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/26 22:14:34 by rgilles           #+#    #+#             */
-/*   Updated: 2023/09/05 18:14:21 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/09/05 18:30:25 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,16 +83,12 @@ void	print_ip_header(struct iphdr	ip) {
 	ip.id = SWAP_16(ip.id);
 	ip.frag_off = SWAP_16(ip.frag_off);
 	ip.check = SWAP_16(ip.check);
-	printf("Vr HL TOS  Len   ID Flg  off TTL Pro  cks      Src      Dst Data\n");
+	printf("Vr HL TOS  Len   ID Flg  off TTL Pro  cks      Src      Dst     Data\n");
 	printf (" %1x  %1x  %02x %04x %04x   %1x %04x  %02x  %02x %04x",
 		ip.version, ip.ihl, ip.tos, ip.tot_len, ip.id, ip.frag_off >> 13, ip.frag_off & 0x1fff, ip.ttl, ip.protocol, ip.check);
 	printf (" %s ", inet_ntop(AF_INET, &ip.saddr, ip_buf, INET_ADDRSTRLEN));
 	printf (" %s ", inet_ntop(AF_INET, &ip.daddr, ip_buf, INET_ADDRSTRLEN));
 	printf("\n");
-}
-
-void	print_icmp_resume(struct icmp embedded_icmp, uint16_t size) {
-	printf("ICMP: type %u, code %u, size %u, id 0x%04x, seq 0x%04x\n", embedded_icmp.icmp_type, embedded_icmp.icmp_code, size, SWAP_16(embedded_icmp.icmp_id), SWAP_16(embedded_icmp.icmp_seq));
 }
 
 int		main(int argc, char** argv) {
@@ -134,7 +130,12 @@ int		main(int argc, char** argv) {
 	req_frame.icmp_req.icmp_seq = 0;
 
 	prev_req_timestamp = 0;
-	printf("PING %s (%s): %lu data bytes\n", current_ping.hostname, current_ping.ip, sizeof(req_frame.icmp_req.icmp_dun) + sizeof(req_frame.supplementary_data));
+	if (current_ping.verb_flag)
+		printf("PING %s (%s): %lu data bytes, id 0x%04x = %u\n", current_ping.hostname, current_ping.ip,
+			sizeof(req_frame.icmp_req.icmp_dun) + sizeof(req_frame.supplementary_data), (uint16_t)getpid(), (uint16_t)getpid());
+	else
+		printf("PING %s (%s): %lu data bytes\n", current_ping.hostname, current_ping.ip,
+			sizeof(req_frame.icmp_req.icmp_dun) + sizeof(req_frame.supplementary_data));
 
 	signal(SIGINT, sig_handler);
 
@@ -152,8 +153,14 @@ int		main(int argc, char** argv) {
 					handle_other_response(resp_frame, resp_frame.icmp_resp.icmp_code == 3 ? "Destination Net Unreachable" : "Destination Host Unreachable");
 				if (resp_frame.icmp_resp.icmp_type == ICMP_TIMXCEED)
 					handle_other_response(resp_frame, "Time to live exceeded");
-				print_ip_header(*(struct iphdr*)&resp_frame.icmp_resp.icmp_dun.id_ip.idi_ip);
-				print_icmp_resume(resp_frame.embedded_orig_icmp, SWAP_16((*(struct iphdr*)&resp_frame.icmp_resp.icmp_dun.id_ip.idi_ip).tot_len) - 20);
+				if (current_ping.verb_flag) {
+					print_ip_header(*(struct iphdr*)&resp_frame.icmp_resp.icmp_dun.id_ip.idi_ip);
+					printf("ICMP: type %u, code %u, size %u, id 0x%04x, seq 0x%04x\n",
+						resp_frame.embedded_orig_icmp.icmp_type, resp_frame.embedded_orig_icmp.icmp_code,
+						SWAP_16((*(struct iphdr*)&resp_frame.icmp_resp.icmp_dun.id_ip.idi_ip).tot_len) - 20,
+						SWAP_16(resp_frame.embedded_orig_icmp.icmp_id), SWAP_16(resp_frame.embedded_orig_icmp.icmp_seq)
+					);
+				}
 			}
 			ft_bzero(&resp_frame, sizeof(resp_frame));
 		}
