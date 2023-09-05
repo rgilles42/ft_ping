@@ -6,7 +6,7 @@
 #    By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/07/26 22:17:05 by rgilles           #+#    #+#              #
-#    Updated: 2023/08/28 16:32:33 by rgilles          ###   ########.fr        #
+#    Updated: 2023/09/05 14:33:50 by rgilles          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,7 +19,7 @@ INCL	=	includes/
 LIBFT_D	=	Libft/
 
 SRCSD	=	srcs/
-SRCSF	=	parse_command.c io.c main.c
+SRCSF	=	parse_command.c gen_request.c resp_handling.c main.c
 SRCS	=	$(addprefix ${SRCSD},${SRCSF})
 OBJS	=	${SRCS:.c=.o}
 

@@ -6,7 +6,7 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/26 22:14:34 by rgilles           #+#    #+#             */
-/*   Updated: 2023/09/05 00:21:53 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/09/05 14:39:54 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,10 +52,10 @@ int		resolve_hostname() {
 	int					gai_res;
 
 	ft_memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = AF_INET;    /* Allow IPv4 or IPv6 */
-	hints.ai_socktype = SOCK_RAW; /* Datagram socket */
-	hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
-	hints.ai_protocol = IPPROTO_ICMP;          /* Any protocol */
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_RAW;
+	hints.ai_flags = AI_PASSIVE;
+	hints.ai_protocol = IPPROTO_ICMP;
 	hints.ai_canonname = NULL;
 	hints.ai_addr = NULL;
 	hints.ai_next = NULL;
@@ -143,8 +143,8 @@ int		main(int argc, char** argv) {
 					printf("ICMP_UNREACH %u\n", resp_frame.icmp_resp.icmp_code);
 					break;
 				case ICMP_TIMXCEED:
-					printf("ICMP_TIMXCEED\n");
-					print_ip_header(resp_frame.ip_header);
+					handle_ttl_exp_response(resp_frame, remote_addr);
+					//print_ip_header(resp_frame.ip_header);
 					break;
 			}
 		}
