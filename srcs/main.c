@@ -6,7 +6,7 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/26 22:14:34 by rgilles           #+#    #+#             */
-/*   Updated: 2023/09/05 14:39:54 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/09/05 15:13:16 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -136,14 +136,14 @@ int		main(int argc, char** argv) {
 			switch (resp_frame.icmp_resp.icmp_type) {
 				case ICMP_ECHOREPLY:
 					if (resp_frame.icmp_resp.icmp_id == req_frame.icmp_req.icmp_id)
-						handle_pong(&current_ping, resp_frame, remote_addr);
+						handle_pong(&current_ping, resp_frame, &remote_addr);
 					break;
 				case ICMP_UNREACH:
 					// code 1: Dest Host Unr or code 3: Dest Net Unr
-					printf("ICMP_UNREACH %u\n", resp_frame.icmp_resp.icmp_code);
+					handle_other_response(resp_frame, &remote_addr, "Destination Host Unreachable");
 					break;
 				case ICMP_TIMXCEED:
-					handle_ttl_exp_response(resp_frame, remote_addr);
+					handle_other_response(resp_frame, &remote_addr, "Time to live exceeded");
 					//print_ip_header(resp_frame.ip_header);
 					break;
 			}

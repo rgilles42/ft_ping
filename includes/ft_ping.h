@@ -6,7 +6,7 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/26 22:16:31 by rgilles           #+#    #+#             */
-/*   Updated: 2023/09/05 14:39:23 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/09/05 15:16:03 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,7 @@ typedef struct __attribute__ ((__packed__))	s_respframe {
 void	print_error(const char *s);
 void	parse_command(int argc, char** argv, t_curping* current_command);
 void	generate_request(t_curping* current_ping, t_reqframe* req_frame);
-void	handle_pong(t_curping* current_ping, t_respframe resp_frame, struct sockaddr_in remote_addr);
-void	handle_ttl_exp_response(t_respframe resp_frame, struct sockaddr_in remote_addr);
+void	handle_pong(t_curping* current_ping, t_respframe resp_frame, struct sockaddr_in* remote_addr);
+void	handle_other_response(t_respframe resp_frame, struct sockaddr_in* remote_addr, char* message);
 
 #endif
