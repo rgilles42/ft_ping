@@ -6,7 +6,7 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/28 17:56:02 by rgilles           #+#    #+#             */
-/*   Updated: 2023/09/05 14:36:52 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/09/05 17:09:43 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,5 +54,5 @@ void	generate_request(t_curping* current_ping, t_reqframe* req_frame) {
 		exit(-1);
 	}
 	add_timestamp(&current_ping->timestamps_list, req_frame->icmp_req.icmp_seq, &curr_timestamp);
-	req_frame->icmp_req.icmp_seq += SWAP_ENDIANNESS_16((uint16_t)1);
+	req_frame->icmp_req.icmp_seq += SWAP_16((uint16_t)1);
 }

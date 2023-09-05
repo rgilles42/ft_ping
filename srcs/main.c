@@ -6,7 +6,7 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/26 22:14:34 by rgilles           #+#    #+#             */
-/*   Updated: 2023/09/05 15:13:16 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/09/05 18:14:21 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,12 +71,28 @@ int		resolve_hostname() {
 }
 
 void	print_ip_header(struct iphdr	ip) {
+	char	ip_buf[INET_ADDRSTRLEN];
+	printf("IP Hdr Dump:\n");
+	for (uint16_t i = 0; i < 20; ++i) {
+		if (!(i % 2))
+			printf(" ");
+		printf("%02x", ((uint8_t*)&ip)[i]);
+	}
+	printf("\n");
+	ip.tot_len = SWAP_16(ip.tot_len);
+	ip.id = SWAP_16(ip.id);
+	ip.frag_off = SWAP_16(ip.frag_off);
+	ip.check = SWAP_16(ip.check);
 	printf("Vr HL TOS  Len   ID Flg  off TTL Pro  cks      Src      Dst Data\n");
 	printf (" %1x  %1x  %02x %04x %04x   %1x %04x  %02x  %02x %04x",
-		ip.version, ip.ihl, ip.tos, ip.tot_len, ip.id, ((ip.frag_off) & 0xe000) >> 13, (ip.frag_off) & 0x1fff, ip.ttl, ip.protocol, ip.check);
-	printf (" %s ", inet_ntoa (*((struct in_addr *) &ip.saddr)));
-	printf (" %s ", inet_ntoa (*((struct in_addr *) &ip.daddr)));
+		ip.version, ip.ihl, ip.tos, ip.tot_len, ip.id, ip.frag_off >> 13, ip.frag_off & 0x1fff, ip.ttl, ip.protocol, ip.check);
+	printf (" %s ", inet_ntop(AF_INET, &ip.saddr, ip_buf, INET_ADDRSTRLEN));
+	printf (" %s ", inet_ntop(AF_INET, &ip.daddr, ip_buf, INET_ADDRSTRLEN));
 	printf("\n");
+}
+
+void	print_icmp_resume(struct icmp embedded_icmp, uint16_t size) {
+	printf("ICMP: type %u, code %u, size %u, id 0x%04x, seq 0x%04x\n", embedded_icmp.icmp_type, embedded_icmp.icmp_code, size, SWAP_16(embedded_icmp.icmp_id), SWAP_16(embedded_icmp.icmp_seq));
 }
 
 int		main(int argc, char** argv) {
@@ -85,7 +101,6 @@ int		main(int argc, char** argv) {
 	t_respframe			resp_frame;
 	struct timeval		curr_timestamp;
 	unsigned long		prev_req_timestamp;
-	struct sockaddr_in	remote_addr;
 
 	parse_command(argc, argv, &current_ping);
 
@@ -115,7 +130,7 @@ int		main(int argc, char** argv) {
 	ft_bzero(&req_frame, sizeof(req_frame));
 	req_frame.icmp_req.icmp_type = ICMP_ECHO;
 	req_frame.icmp_req.icmp_code = 0;
-	req_frame.icmp_req.icmp_id = SWAP_ENDIANNESS_16((uint16_t)getpid());
+	req_frame.icmp_req.icmp_id = SWAP_16((uint16_t)getpid());
 	req_frame.icmp_req.icmp_seq = 0;
 
 	prev_req_timestamp = 0;
@@ -130,23 +145,17 @@ int		main(int argc, char** argv) {
 			prev_req_timestamp = curr_timestamp.tv_sec;
 		}
 		if (recvfrom(current_ping.sock_fd, &resp_frame, sizeof(resp_frame), MSG_DONTWAIT, NULL, NULL) > 0) {
-			remote_addr.sin_family = AF_INET;
-			remote_addr.sin_port = 0;
-			remote_addr.sin_addr.s_addr = resp_frame.ip_header.saddr;
-			switch (resp_frame.icmp_resp.icmp_type) {
-				case ICMP_ECHOREPLY:
-					if (resp_frame.icmp_resp.icmp_id == req_frame.icmp_req.icmp_id)
-						handle_pong(&current_ping, resp_frame, &remote_addr);
-					break;
-				case ICMP_UNREACH:
-					// code 1: Dest Host Unr or code 3: Dest Net Unr
-					handle_other_response(resp_frame, &remote_addr, "Destination Host Unreachable");
-					break;
-				case ICMP_TIMXCEED:
-					handle_other_response(resp_frame, &remote_addr, "Time to live exceeded");
-					//print_ip_header(resp_frame.ip_header);
-					break;
+			if (resp_frame.icmp_resp.icmp_type == ICMP_ECHOREPLY && resp_frame.icmp_resp.icmp_id == req_frame.icmp_req.icmp_id) {
+					handle_pong(&current_ping, resp_frame);
+			} else if (resp_frame.embedded_orig_icmp.icmp_id == req_frame.icmp_req.icmp_id) {
+				if (resp_frame.icmp_resp.icmp_type == ICMP_UNREACH)
+					handle_other_response(resp_frame, resp_frame.icmp_resp.icmp_code == 3 ? "Destination Net Unreachable" : "Destination Host Unreachable");
+				if (resp_frame.icmp_resp.icmp_type == ICMP_TIMXCEED)
+					handle_other_response(resp_frame, "Time to live exceeded");
+				print_ip_header(*(struct iphdr*)&resp_frame.icmp_resp.icmp_dun.id_ip.idi_ip);
+				print_icmp_resume(resp_frame.embedded_orig_icmp, SWAP_16((*(struct iphdr*)&resp_frame.icmp_resp.icmp_dun.id_ip.idi_ip).tot_len) - 20);
 			}
+			ft_bzero(&resp_frame, sizeof(resp_frame));
 		}
 	}
 }
