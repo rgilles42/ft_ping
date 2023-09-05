@@ -6,11 +6,12 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/28 17:56:02 by rgilles           #+#    #+#             */
-/*   Updated: 2023/09/05 17:09:43 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/09/05 18:56:34 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <ft_ping.h>
+#include <sys/time.h>
 
 void	add_timestamp(t_list** timestamps_list, uint16_t icmpseq, struct timeval* timestamp){
 	struct timeval*	ts;

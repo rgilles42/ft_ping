@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include <ft_ping.h>
+#include <stdio.h>
 
 void	print_help() {
 	printf("%s\n", "Usage: ft_ping [OPTION...] HOST ...");

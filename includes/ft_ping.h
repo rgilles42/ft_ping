@@ -6,7 +6,7 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/26 22:16:31 by rgilles           #+#    #+#             */
-/*   Updated: 2023/09/05 17:59:10 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/09/05 18:46:32 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,15 +14,9 @@
 # define FT_PING_H
 
 # include <stdbool.h>
-# include <stdlib.h> // exit 
-# include <stdio.h>
-# include <sys/socket.h>
-# include <arpa/inet.h>
+# include <netinet/in.h>
 # include <netinet/ip.h>
 # include <netinet/ip_icmp.h>
-# include <unistd.h>
-# include <sys/types.h>
-# include <sys/time.h>
 # include <libft.h>
 
 # define PING_RECEIVED -42

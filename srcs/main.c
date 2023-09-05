@@ -6,14 +6,17 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/26 22:14:34 by rgilles           #+#    #+#             */
-/*   Updated: 2023/09/05 18:30:25 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/09/05 19:05:16 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <signal.h>
 #include <ft_ping.h>
-#include <string.h> //strerror
-#include <netdb.h>	//getaddrinfo
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <signal.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/time.h>
 
 t_curping			current_ping;
 
@@ -99,46 +102,41 @@ int		main(int argc, char** argv) {
 	unsigned long		prev_req_timestamp;
 
 	parse_command(argc, argv, &current_ping);
-
 	if (resolve_hostname()) {
 		exit(-1);
 	}
-	if (!inet_ntop(current_ping.addr.sin_family, &current_ping.addr.sin_addr, current_ping.ip, INET_ADDRSTRLEN)) {
-		print_error("ft_ping: ip address field conversion");
-		exit(-1);
-	}
-
-
+	inet_ntop(current_ping.addr.sin_family, &current_ping.addr.sin_addr, current_ping.ip, INET_ADDRSTRLEN);
+	
 	if ((current_ping.sock_fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1) {
 		print_error("ft_ping: icmp open socket");
 		exit(-1);
 	}
-
+	
 	timeout_sockopt.tv_sec = 5;
 	timeout_sockopt.tv_usec = 0;
-
 	if (setsockopt(current_ping.sock_fd, SOL_IP, IP_TTL, &current_ping.ttl, sizeof(current_ping.ttl)) ||
 		setsockopt(current_ping.sock_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout_sockopt, sizeof(timeout_sockopt))
-		)
+	) {
+		print_error("ft_ping: setsockopt");
 		exit(1);
-
-
+	}
+	
 	ft_bzero(&req_frame, sizeof(req_frame));
 	req_frame.icmp_req.icmp_type = ICMP_ECHO;
 	req_frame.icmp_req.icmp_code = 0;
 	req_frame.icmp_req.icmp_id = SWAP_16((uint16_t)getpid());
 	req_frame.icmp_req.icmp_seq = 0;
-
 	prev_req_timestamp = 0;
+	
 	if (current_ping.verb_flag)
 		printf("PING %s (%s): %lu data bytes, id 0x%04x = %u\n", current_ping.hostname, current_ping.ip,
 			sizeof(req_frame.icmp_req.icmp_dun) + sizeof(req_frame.supplementary_data), (uint16_t)getpid(), (uint16_t)getpid());
 	else
 		printf("PING %s (%s): %lu data bytes\n", current_ping.hostname, current_ping.ip,
 			sizeof(req_frame.icmp_req.icmp_dun) + sizeof(req_frame.supplementary_data));
-
+	
 	signal(SIGINT, sig_handler);
-
+	
 	while (1) {
 		gettimeofday(&curr_timestamp, NULL);
 		if (curr_timestamp.tv_sec - prev_req_timestamp) {
@@ -151,8 +149,10 @@ int		main(int argc, char** argv) {
 			} else if (resp_frame.embedded_orig_icmp.icmp_id == req_frame.icmp_req.icmp_id) {
 				if (resp_frame.icmp_resp.icmp_type == ICMP_UNREACH)
 					handle_other_response(resp_frame, resp_frame.icmp_resp.icmp_code == 3 ? "Destination Net Unreachable" : "Destination Host Unreachable");
-				if (resp_frame.icmp_resp.icmp_type == ICMP_TIMXCEED)
+				else if (resp_frame.icmp_resp.icmp_type == ICMP_TIMXCEED)
 					handle_other_response(resp_frame, "Time to live exceeded");
+				else
+					handle_other_response(resp_frame, "Unexpected ICMP response");
 				if (current_ping.verb_flag) {
 					print_ip_header(*(struct iphdr*)&resp_frame.icmp_resp.icmp_dun.id_ip.idi_ip);
 					printf("ICMP: type %u, code %u, size %u, id 0x%04x, seq 0x%04x\n",

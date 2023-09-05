@@ -6,14 +6,16 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/09/05 14:33:10 by rgilles           #+#    #+#             */
-/*   Updated: 2023/09/05 18:17:24 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/09/05 19:05:22 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <ft_ping.h>
-#include <arpa/inet.h> // inet_ntop
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <stdio.h>
 #include <sys/socket.h>
-#include <netdb.h>	// getnameinfo
+#include <sys/time.h>
 
 struct timeval*	get_timestamp(t_list* timestamps_list, uint16_t icmpseq){
 	while (timestamps_list->rank != icmpseq)
@@ -29,10 +31,7 @@ void	handle_pong(t_curping* current_ping, t_respframe resp_frame) {
 	uint16_t			icmp_resp_size;
 	uint16_t			icmp_resp_seq;
 
-	if (!inet_ntop(AF_INET, &resp_frame.ip_header.saddr, remote_ip, INET_ADDRSTRLEN)) {
-		print_error("ft_ping: ip address field conversion");
-		exit(-1);
-	}
+	inet_ntop(AF_INET, &resp_frame.ip_header.saddr, remote_ip, INET_ADDRSTRLEN);
 	icmp_resp_size = SWAP_16(resp_frame.ip_header.tot_len) - 20 ;
 	icmp_resp_seq = SWAP_16(resp_frame.icmp_resp.icmp_seq);
 	gettimeofday(&timestamp_resp, NULL);
@@ -50,10 +49,7 @@ void	handle_other_response(t_respframe resp_frame, char* message) {
 	remote_addr.sin_port = 0;
 	remote_addr.sin_addr.s_addr = resp_frame.ip_header.saddr;
 	ft_bzero(remote_hostname, sizeof(remote_hostname));
-	if (!inet_ntop(remote_addr.sin_family, &remote_addr.sin_addr, remote_ip, INET_ADDRSTRLEN)) {
-		print_error("ft_ping: ip address field conversion");
-		exit(-1);
-	}
+	inet_ntop(remote_addr.sin_family, &remote_addr.sin_addr, remote_ip, INET_ADDRSTRLEN);
 	icmp_resp_size = SWAP_16(resp_frame.ip_header.tot_len) - 20;
 	if (!getnameinfo((struct sockaddr*)&remote_addr, sizeof(struct sockaddr_in), remote_hostname, sizeof(remote_hostname), NULL, 0, 0) && remote_hostname[0])
 		printf("%u bytes from %s (%s): %s\n", icmp_resp_size, remote_hostname, remote_ip, message);
