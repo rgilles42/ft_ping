@@ -6,13 +6,13 @@
 #    By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/07/26 22:17:05 by rgilles           #+#    #+#              #
-#    Updated: 2023/09/05 14:33:50 by rgilles          ###   ########.fr        #
+#    Updated: 2023/09/05 21:46:45 by rgilles          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME	=	ft_ping
 
-CC		=	clang
+CC		=	gcc
 CFLAGS	=	-Wall -Wextra -Werror -g -I${LIBFT_D}${INCL} -I${INCL}
 
 INCL	=	includes/
@@ -38,5 +38,10 @@ fclean	:	clean
 			rm -rf ${NAME}
 
 re	:		fclean all
+
+docker	:
+			docker build -t "ft_ping" .
+			docker run -it --mount type=bind,source="./",target=/root/ft_ping ft_ping
+			docker ps -a | grep ft_ping | awk '{print $$1 }' | xargs -I {} docker rm {}
 
 .PHONY	:	all re clean fclean
