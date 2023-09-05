@@ -20,7 +20,7 @@
 # include <libft.h>
 
 # define PING_RECEIVED -42
-# define SWAP_16(x) ((x & 0x00FF) << 8 | (x) >> 8)
+# define SWAP_16(x) ((x & 0x00FF) << 8 | (x & 0xFF00) >> 8)
 
 typedef struct	s_curping {
 	char				hostname[254];

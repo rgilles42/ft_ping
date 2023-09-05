@@ -41,7 +41,7 @@ re	:		fclean all
 
 docker	:
 			docker build -t "ft_ping" .
-			docker run -it --mount type=bind,source="./",target=/root/ft_ping ft_ping
+			docker run -it --mount type=bind,source="./",target=/home/user/ft_ping ft_ping
 			docker ps -a | grep ft_ping | awk '{print $$1 }' | xargs -I {} docker rm {}
 
 .PHONY	:	all re clean fclean
