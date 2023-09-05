@@ -6,7 +6,7 @@
 /*   By: rgilles <rgilles@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/28 17:56:02 by rgilles           #+#    #+#             */
-/*   Updated: 2023/09/05 18:56:34 by rgilles          ###   ########.fr       */
+/*   Updated: 2023/09/05 22:39:34 by rgilles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,9 @@ void	generate_request(t_curping* current_ping, t_reqframe* req_frame) {
 
 	gettimeofday(&curr_timestamp, NULL);
 	ft_memcpy(&req_frame->icmp_req.icmp_dun, &curr_timestamp.tv_sec, sizeof(curr_timestamp.tv_sec));
-	ft_memcpy((char*)&req_frame->icmp_req.icmp_dun + sizeof(curr_timestamp.tv_sec), "googoogaga", 11);
+	ft_memcpy((char*)&req_frame->icmp_req.icmp_dun + sizeof(curr_timestamp.tv_sec), &curr_timestamp.tv_usec, sizeof(curr_timestamp.tv_usec));
+	for (int i = 0; i < 0x28; ++i)
+		((char*)&req_frame->icmp_req.icmp_dun)[16 + i] = i;
 	req_frame->icmp_req.icmp_cksum = 0;
 	req_frame->icmp_req.icmp_cksum = gen_checksum(req_frame, sizeof(*req_frame));
 	if (sendto(current_ping->sock_fd, req_frame, sizeof(*req_frame), 0, (struct sockaddr*)&current_ping->addr, sizeof(current_ping->addr)) < 0) {
