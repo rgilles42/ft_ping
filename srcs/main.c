@@ -126,7 +126,8 @@ int		main(int argc, char** argv) {
 	req_frame.icmp_req.icmp_code = 0;
 	req_frame.icmp_req.icmp_id = SWAP_16((uint16_t)getpid());
 	req_frame.icmp_req.icmp_seq = 0;
-	prev_req_timestamp = 0;
+	gettimeofday(&curr_timestamp, NULL);
+	prev_req_timestamp = curr_timestamp.tv_sec;
 	
 	if (current_ping.verb_flag)
 		printf("PING %s (%s): %lu data bytes, id 0x%04x = %u\n", current_ping.hostname, current_ping.ip,
