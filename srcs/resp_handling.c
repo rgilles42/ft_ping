@@ -48,12 +48,12 @@ void	handle_other_response(t_respframe resp_frame, char* message) {
 	remote_addr.sin_family = AF_INET;
 	remote_addr.sin_port = 0;
 	remote_addr.sin_addr.s_addr = resp_frame.ip_header.saddr;
-	ft_bzero(remote_hostname, sizeof(remote_hostname));
 	inet_ntop(remote_addr.sin_family, &remote_addr.sin_addr, remote_ip, INET_ADDRSTRLEN);
 	icmp_resp_size = SWAP_16(resp_frame.ip_header.tot_len) - 20;
+	ft_bzero(remote_hostname, sizeof(remote_hostname));
 	if (!getnameinfo((struct sockaddr*)&remote_addr, sizeof(struct sockaddr_in), remote_hostname, sizeof(remote_hostname), NULL, 0, 0) && remote_hostname[0]
-		&& !ft_strncmp(remote_ip, remote_hostname, INET_ADDRSTRLEN
-	))
+		&& ft_strncmp(remote_ip, remote_hostname, INET_ADDRSTRLEN)
+	)
 		printf("%u bytes from %s (%s): %s\n", icmp_resp_size, remote_hostname, remote_ip, message);
 	else
 		printf("%u bytes from %s: %s\n", icmp_resp_size, remote_ip, message);
