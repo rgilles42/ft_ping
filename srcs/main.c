@@ -45,9 +45,8 @@ void	sig_handler(int signo) {
 		tmp = tmp->next;
 	}
 	ft_lstclear(&current_ping.timestamps_list, free);
-	if (!tr_packets)
-		tr_packets = 1;
-	printf("%d packets transmitted, %d packets received, %d%% packet loss\n", tr_packets, rcvd_packets, (tr_packets - rcvd_packets) * 100 / tr_packets);
+	if (tr_packets)
+		printf("%d packets transmitted, %d packets received, %d%% packet loss\n", tr_packets, rcvd_packets, (tr_packets - rcvd_packets) * 100 / tr_packets);
 	exit(0);
 }
 
