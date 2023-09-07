@@ -41,6 +41,6 @@ re	:		fclean all
 
 docker	:
 			docker build -t "ft_ping" .
-			docker run --rm -it --mount type=bind,source="./",target=/home/user/ft_ping ft_ping
+			docker run --rm -it ft_ping
 
 .PHONY	:	all re clean fclean
