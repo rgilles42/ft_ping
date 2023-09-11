@@ -82,12 +82,12 @@ void	print_ip_header(struct iphdr	ip) {
 			printf(" ");
 		printf("%02x", ((uint8_t*)&ip)[i]);
 	}
-	printf("\n");
+	printf(" \n");
 	ip.tot_len = SWAP_16(ip.tot_len);
 	ip.id = SWAP_16(ip.id);
 	ip.frag_off = SWAP_16(ip.frag_off);
 	ip.check = SWAP_16(ip.check);
-	printf("Vr HL TOS  Len   ID Flg  off TTL Pro  cks      Src      Dst     Data\n");
+	printf("Vr HL TOS  Len   ID Flg  off TTL Pro  cks      Src	Dst	Data\n");
 	printf (" %1x  %1x  %02x %04x %04x   %1x %04x  %02x  %02x %04x",
 		ip.version, ip.ihl, ip.tos, ip.tot_len, ip.id, ip.frag_off >> 13, ip.frag_off & 0x1fff, ip.ttl, ip.protocol, ip.check);
 	printf (" %s ", inet_ntop(AF_INET, &ip.saddr, ip_buf, INET_ADDRSTRLEN));
