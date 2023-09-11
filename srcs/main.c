@@ -100,7 +100,7 @@ int		main(int argc, char** argv) {
 	t_reqframe			req_frame;
 	t_respframe			resp_frame;
 	struct timeval		curr_timestamp;
-	unsigned long		prev_req_timestamp;
+	struct timeval		prev_req_timestamp;
 
 	parse_command(argc, argv, &current_ping);
 	if (resolve_hostname()) {
@@ -127,8 +127,7 @@ int		main(int argc, char** argv) {
 	req_frame.icmp_req.icmp_code = 0;
 	req_frame.icmp_req.icmp_id = SWAP_16((uint16_t)getpid());
 	req_frame.icmp_req.icmp_seq = 0;
-	gettimeofday(&curr_timestamp, NULL);
-	prev_req_timestamp = curr_timestamp.tv_sec;
+	gettimeofday(&prev_req_timestamp, NULL);
 	
 	if (current_ping.verb_flag)
 		printf("PING %s (%s): %lu data bytes, id 0x%04x = %u\n", current_ping.hostname, current_ping.ip,
@@ -141,9 +140,11 @@ int		main(int argc, char** argv) {
 	
 	while (1) {
 		gettimeofday(&curr_timestamp, NULL);
-		if (curr_timestamp.tv_sec - prev_req_timestamp) {
+		if (curr_timestamp.tv_sec - prev_req_timestamp.tv_sec
+			&& curr_timestamp.tv_usec - prev_req_timestamp.tv_usec >= 0) {
 			generate_request(&current_ping, &req_frame);
-			prev_req_timestamp = curr_timestamp.tv_sec;
+			prev_req_timestamp.tv_sec = curr_timestamp.tv_sec;
+			prev_req_timestamp.tv_usec = curr_timestamp.tv_usec;
 		}
 		if (recvfrom(current_ping.sock_fd, &resp_frame, sizeof(resp_frame), MSG_DONTWAIT, NULL, NULL) > 0) {
 			if (resp_frame.icmp_resp.icmp_type == ICMP_ECHOREPLY && resp_frame.icmp_resp.icmp_id == req_frame.icmp_req.icmp_id) {
